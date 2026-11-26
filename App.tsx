@@ -23,6 +23,72 @@ import {
 import Icon from 'react-native-vector-icons/AntDesign';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import LinearGradient from 'react-native-linear-gradient';
+
+const AnimatedMaterialIcon = Animated.createAnimatedComponent(MaterialIcon);
+
+const AnimatedNavIcon: React.FC<{
+  name: string;
+  color: string;
+  size: number;
+}> = ({ name, color, size }) => {
+  const rotation = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    let stopped = false;
+    let running: Animated.CompositeAnimation | null = null;
+
+    const step = () => {
+      if (stopped) return;
+      const targetRotation = (Math.random() - 0.5) * 18;
+      const targetScale = 0.94 + Math.random() * 0.1;
+      const duration = 1500 + Math.random() * 1400;
+
+      running = Animated.parallel([
+        Animated.timing(rotation, {
+          toValue: targetRotation,
+          duration,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: targetScale,
+          duration,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ]);
+      running.start(() => {
+        if (!stopped) step();
+      });
+    };
+
+    step();
+    return () => {
+      stopped = true;
+      running?.stop();
+    };
+  }, [rotation, scale]);
+
+  return (
+    <AnimatedMaterialIcon
+      name={name}
+      size={size}
+      color={color}
+      style={{
+        transform: [
+          {
+            rotate: rotation.interpolate({
+              inputRange: [-30, 30],
+              outputRange: ['-30deg', '30deg'],
+            }),
+          },
+          { scale },
+        ],
+      }}
+    />
+  );
+};
 import {
   SafeAreaProvider,
   SafeAreaView,
@@ -132,8 +198,8 @@ function AppContent() {
 
   const navItems: { label: string; icon: string; tab: TabType }[] = [
     { label: 'Home', icon: 'home', tab: 'status' },
-    { label: 'Meetings', icon: 'calendar-month', tab: 'saved' },
-    { label: 'Notification', icon: 'notifications', tab: 'settings' },
+    { label: 'Saved', icon: 'bookmark', tab: 'saved' },
+    { label: 'Settings', icon: 'settings', tab: 'settings' },
   ];
 
   const imagesLabelColor = mediaProgress.interpolate({
@@ -626,7 +692,7 @@ function AppContent() {
                           selected && styles.navIconCircleActive,
                         ]}
                       >
-                        <MaterialIcon
+                        <AnimatedNavIcon
                           name={item.icon}
                           size={20}
                           color={selected ? '#111111' : '#8A8A8A'}
