@@ -1,0 +1,404 @@
+import RNFS from 'react-native-fs';
+import { Platform } from 'react-native';
+import { StatusFile, StatusFolder } from '../types';
+import { CameraRoll } from '@react-native-camera-roll/camera-roll';
+import { hasFolderAccess, listFolderFiles } from './folderPicker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const SAVED_STATUS_IDS_KEY = '@saved_status_ids';
+
+const WHATSAPP_STATUS_PATHS = [
+  // Legacy paths (Android 10 and below) - More accessible
+  `${RNFS.ExternalStorageDirectoryPath}/WhatsApp/Media/.Statuses`,
+  '/storage/emulated/0/WhatsApp/Media/.Statuses',
+  '/sdcard/WhatsApp/Media/.Statuses',
+  // New paths (Android 11+) - Require MANAGE_EXTERNAL_STORAGE
+  `${RNFS.ExternalStorageDirectoryPath}/Android/media/com.whatsapp/WhatsApp/Media/.Statuses`,
+  '/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/.Statuses',
+  '/sdcard/Android/media/com.whatsapp/WhatsApp/Media/.Statuses',
+  `${RNFS.ExternalStorageDirectoryPath}/Android/data/com.whatsapp/files/Statuses`,
+];
+
+const WHATSAPP_BUSINESS_PATHS = [
+  `${RNFS.ExternalStorageDirectoryPath}/Android/media/com.whatsapp.w4b/WhatsApp Business/Media/.Statuses`,
+  `${RNFS.ExternalStorageDirectoryPath}/WhatsApp Business/Media/.Statuses`,
+  '/storage/emulated/0/Android/media/com.whatsapp.w4b/WhatsApp Business/Media/.Statuses',
+  '/storage/emulated/0/WhatsApp Business/Media/.Statuses',
+  `${RNFS.ExternalStorageDirectoryPath}/Android/data/com.whatsapp.w4b/files/Statuses`,
+  '/sdcard/WhatsApp Business/Media/.Statuses',
+  '/sdcard/Android/media/com.whatsapp.w4b/WhatsApp Business/Media/.Statuses',
+];
+
+export const findStatusFolder = async (): Promise<StatusFolder | null> => {
+  if (Platform.OS !== 'android') {
+    return null;
+  }
+
+  for (const path of WHATSAPP_STATUS_PATHS) {
+    try {
+      const exists = await RNFS.exists(path);
+
+      if (exists) {
+        // Check if we can read the directory
+        try {
+          await RNFS.readDir(path);
+          return { path, exists: true };
+        } catch {
+          continue;
+        }
+      }
+    } catch {
+      // Ignore path check errors
+    }
+  }
+
+  return null;
+};
+
+export const findBusinessStatusFolder =
+  async (): Promise<StatusFolder | null> => {
+    if (Platform.OS !== 'android') {
+      return null;
+    }
+
+    for (const path of WHATSAPP_BUSINESS_PATHS) {
+      try {
+        const exists = await RNFS.exists(path);
+
+        if (exists) {
+          try {
+            await RNFS.readDir(path);
+            return { path, exists: true };
+          } catch {
+            continue;
+          }
+        }
+      } catch {
+        // Ignore path check errors
+      }
+    }
+
+    return null;
+  };
+
+/**
+ * Get all status files from WhatsApp or WhatsApp Business
+ */
+export const getStatusFiles = async (
+  type: 'whatsapp' | 'business' = 'whatsapp',
+): Promise<StatusFile[]> => {
+  try {
+    // For Android 11+, try SAF first
+    if (Platform.OS === 'android' && Platform.Version >= 30) {
+      const safUri = await hasFolderAccess(type);
+      if (safUri) {
+        const safFiles = await listFolderFiles(safUri, type);
+
+        if (safFiles.length > 0) {
+          return safFiles.map((file: any) => ({
+            id: file.name,
+            uri: file.uri,
+            filename: file.name,
+            type:
+              file.type?.startsWith('video/') ||
+              file.name?.toLowerCase().endsWith('.mp4')
+                ? 'video'
+                : 'image',
+            timestamp: file.lastModified || Date.now(),
+            size: file.size || 0,
+          }));
+        }
+      }
+    }
+
+    // Fallback to legacy file system access
+    const statusFolder =
+      type === 'business'
+        ? await findBusinessStatusFolder()
+        : await findStatusFolder();
+
+    if (!statusFolder) {
+      return [];
+    }
+
+    const files = await RNFS.readDir(statusFolder.path);
+
+    if (files.length === 0) {
+      return [];
+    }
+
+    const statusFiles: StatusFile[] = [];
+
+    for (const file of files) {
+      if (file.name === '.nomedia' || file.name.startsWith('.')) {
+        continue;
+      }
+
+      if (!file.isFile() || file.size < 1000) {
+        continue;
+      }
+
+      const fileName = file.name.toLowerCase();
+      let fileType: 'image' | 'video' | null = null;
+
+      const parts = fileName.split('.');
+      const extension = parts.length > 1 ? parts[parts.length - 1] : '';
+
+      if (
+        ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'heic'].includes(extension)
+      ) {
+        fileType = 'image';
+      } else if (
+        ['mp4', '3gp', 'avi', 'mkv', 'mov', 'webm', 'flv'].includes(extension)
+      ) {
+        fileType = 'video';
+      } else if (extension === '' && file.size > 10000) {
+        fileType = 'image';
+      }
+
+      if (fileType) {
+        statusFiles.push({
+          id: file.name,
+          uri: 'file://' + file.path,
+          filename: file.name,
+          type: fileType,
+          timestamp: file.mtime ? new Date(file.mtime).getTime() : Date.now(),
+          size: file.size,
+        });
+      }
+    }
+
+    return statusFiles.sort((a, b) => b.timestamp - a.timestamp);
+  } catch (error) {
+    console.error('❌ Error reading status files:', error);
+    return [];
+  }
+};
+
+/**
+ * Get saved status IDs from AsyncStorage
+ */
+export const getSavedStatusIds = async (): Promise<string[]> => {
+  try {
+    const saved = await AsyncStorage.getItem(SAVED_STATUS_IDS_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch (error) {
+    console.error('Error loading saved status IDs:', error);
+    return [];
+  }
+};
+
+/**
+ * Sync saved status IDs with actual gallery files
+ * Returns all IDs that exist in gallery
+ */
+export const syncSavedStatusIds = async (): Promise<string[]> => {
+  try {
+    const galleryFiles = await getSavedStatusFiles();
+
+    console.log('📂 Gallery files found:', galleryFiles.length);
+
+    // Extract all possible matching IDs from gallery files
+    const allGalleryIds = new Set<string>();
+
+    galleryFiles.forEach(file => {
+      // Add the exact filename (most reliable)
+      if (file.filename) {
+        allGalleryIds.add(file.filename);
+
+        // Also extract base name without extension for matching
+        const parts = file.filename.split('.');
+        if (parts.length > 1) {
+          const baseName = parts.slice(0, -1).join('.');
+          allGalleryIds.add(baseName);
+        }
+      }
+
+      // Add the ID
+      if (file.id && file.id !== file.filename) {
+        allGalleryIds.add(file.id);
+      }
+    });
+
+    const validIds = Array.from(allGalleryIds);
+
+    console.log('💾 Saving IDs to storage:', validIds.length);
+
+    // Update AsyncStorage with all valid IDs from gallery
+    await AsyncStorage.setItem(SAVED_STATUS_IDS_KEY, JSON.stringify(validIds));
+
+    return validIds;
+  } catch (error) {
+    console.error('Error syncing saved status IDs:', error);
+    return [];
+  }
+};
+
+/**
+ * Add a status ID to saved list
+ */
+export const addSavedStatusId = async (
+  statusId: string,
+  filename?: string,
+): Promise<void> => {
+  try {
+    const savedIds = await getSavedStatusIds();
+    const idsToAdd = new Set(savedIds);
+
+    // Add the status ID
+    idsToAdd.add(statusId);
+
+    // Add the filename
+    if (filename) {
+      idsToAdd.add(filename);
+
+      // Also add base name without extension
+      const parts = filename.split('.');
+      if (parts.length > 1) {
+        const baseName = parts.slice(0, -1).join('.');
+        idsToAdd.add(baseName);
+      }
+    }
+
+    const finalIds = Array.from(idsToAdd);
+    console.log('💾 Adding to saved IDs:', finalIds);
+
+    await AsyncStorage.setItem(SAVED_STATUS_IDS_KEY, JSON.stringify(finalIds));
+  } catch (error) {
+    console.error('Error saving status ID:', error);
+  }
+};
+
+/**
+ * Remove a status ID from saved list
+ */
+export const removeSavedStatusId = async (statusId: string): Promise<void> => {
+  try {
+    const savedIds = await getSavedStatusIds();
+    const filtered = savedIds.filter(id => id !== statusId);
+    await AsyncStorage.setItem(SAVED_STATUS_IDS_KEY, JSON.stringify(filtered));
+  } catch (error) {
+    console.error('Error removing status ID:', error);
+  }
+};
+
+export const saveStatusToGallery = async (
+  statusFile: StatusFile,
+): Promise<boolean> => {
+  try {
+    let uriToSave = statusFile.uri;
+
+    // If it's a content URI (from SAF), we need to copy it to a temp location first
+    if (statusFile.uri.startsWith('content://')) {
+      const tempDir = `${RNFS.CachesDirectoryPath}/statuses`;
+      const tempFilePath = `${tempDir}/${statusFile.filename}`;
+
+      // Create temp directory if it doesn't exist
+      const tempDirExists = await RNFS.exists(tempDir);
+      if (!tempDirExists) {
+        await RNFS.mkdir(tempDir);
+      }
+
+      // Copy the file from content URI to temp location
+      try {
+        // Read the file from content URI
+        const fileContent = await RNFS.readFile(statusFile.uri, 'base64');
+        // Write to temp location
+        await RNFS.writeFile(tempFilePath, fileContent, 'base64');
+
+        uriToSave = 'file://' + tempFilePath;
+      } catch (copyError) {
+        console.error('❌ Error copying file:', copyError);
+        return false;
+      }
+    }
+
+    // Save to gallery in Status album
+    await CameraRoll.save(uriToSave, {
+      type: statusFile.type === 'video' ? 'video' : 'photo',
+      album: 'Status',
+    });
+
+    // Mark as saved in persistent storage with both ID and filename
+    await addSavedStatusId(statusFile.id, statusFile.filename);
+
+    // Clean up temp file if we created one
+    if (uriToSave !== statusFile.uri && uriToSave.startsWith('file://')) {
+      const tempPath = uriToSave.replace('file://', '');
+      try {
+        await RNFS.unlink(tempPath);
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error('❌ Error saving to gallery:', error);
+    return false;
+  }
+};
+
+/**
+ * Get saved status files from the device gallery's Status album
+ */
+export const getSavedStatusFiles = async (): Promise<StatusFile[]> => {
+  try {
+    const photos = await CameraRoll.getPhotos({
+      first: 1000,
+      assetType: 'All',
+      groupName: 'Status',
+      include: ['filename', 'fileSize', 'imageSize'],
+    });
+
+    const statusFiles: StatusFile[] = photos.edges.map((edge, index) => {
+      const node = edge.node;
+      const uri = node.image.uri;
+      const filename = node.image.filename || `status_${index}`;
+      const isVideo =
+        node.type === 'video' || filename.toLowerCase().endsWith('.mp4');
+
+      return {
+        // Use filename as primary ID
+        id: filename,
+        uri: uri,
+        filename: filename,
+        type: isVideo ? 'video' : 'image',
+        timestamp: node.timestamp ? node.timestamp * 1000 : Date.now(),
+        size: node.image.fileSize || 0,
+        isSaved: true,
+      };
+    });
+
+    // Sort by timestamp, newest first
+    return statusFiles.sort((a, b) => b.timestamp - a.timestamp);
+  } catch (error) {
+    console.error('❌ Error loading saved statuses from gallery:', error);
+    return [];
+  }
+};
+
+export const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+};
+
+export const formatTimestamp = (timestamp: number): string => {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+
+  if (hours < 1) {
+    const minutes = Math.floor(diff / (1000 * 60));
+    return `${minutes} min ago`;
+  } else if (hours < 24) {
+    return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  } else {
+    const days = Math.floor(hours / 24);
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+  }
+};
