@@ -163,8 +163,7 @@ const HelpScreen: React.FC<HelpScreenProps> = ({ onClose }) => {
               </Text>
               <Text style={[styles.answer, { color: theme.textSecondary }]}>
                 • Clear app cache from device settings{'\n'}• Restart the app
-                {'\n'}• Check for app updates{'\n'}• Reinstall the app if issues
-                persist
+                {'\n'}• Reinstall the app if issues persist
               </Text>
             </View>
 

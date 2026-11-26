@@ -23,8 +23,7 @@ app from source on its own servers and signs it, so there is no APK to upload.
 - The Node setup step is the part F-Droid reviewers most often help refine for
   React Native apps; expect a little back and forth on the merge request.
 - New releases: bump `versionCode`/`versionName` in `android/app/build.gradle`,
-  tag the commit (e.g. `git tag -a 1.0.2`), push the tag. `UpdateCheckMode: Tags`
-  lets F-Droid pick it up automatically.
+  tag the commit (e.g. `git tag -a 1.0.2`) and push the tag.
 
 Docs: https://f-droid.org/docs/Building_Applications and
 https://f-droid.org/docs/Submitting_to_F-Droid_Quick_Start_Guide/

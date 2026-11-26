@@ -136,7 +136,7 @@ public class FolderPickerModule extends ReactContextBaseJavaModule {
                         fileMap.putString("uri", file.getUri().toString());
                         fileMap.putString("name", name);
                         fileMap.putString("type", mimeType);
-                        fileMap.putDouble("size", file.getLength());
+                        fileMap.putDouble("size", file.length());
                         fileMap.putDouble("lastModified", file.lastModified());
                         filesArray.pushMap(fileMap);
                     }

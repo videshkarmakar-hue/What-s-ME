@@ -10,6 +10,13 @@
     -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+    <!--
+      Network access is used only to check GitHub Releases and download the
+      update APK. No user data or status media is ever uploaded.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 
@@ -34,6 +41,15 @@
       android:usesCleartextTraffic="false"
       android:supportsRtl="true"
       android:requestLegacyExternalStorage="true">
+      <provider
+        android:name="androidx.core.content.FileProvider"
+        android:authorities="${applicationId}.fileprovider"
+        android:exported="false"
+        android:grantUriPermissions="true">
+        <meta-data
+          android:name="android.support.FILE_PROVIDER_PATHS"
+          android:resource="@xml/app_update_file_paths" />
+      </provider>
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"

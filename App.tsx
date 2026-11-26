@@ -34,6 +34,7 @@ import HelpScreen from './src/screens/HelpScreen';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
 import { FeedbackProvider } from './src/context/FeedbackContext';
+import AppUpdateGate from './src/components/AppUpdateGate';
 
 type TabType = 'status' | 'saved' | 'settings' | 'about' | 'help';
 type MediaType = 'images' | 'videos';
@@ -49,7 +50,9 @@ function App() {
       <ThemeProvider>
         <LanguageProvider>
           <FeedbackProvider>
-            <AppContent />
+            <AppUpdateGate>
+              <AppContent />
+            </AppUpdateGate>
           </FeedbackProvider>
         </LanguageProvider>
       </ThemeProvider>
