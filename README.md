@@ -54,30 +54,7 @@ What's ME is built to need as little as possible:
 The full privacy policy and terms are available inside the app, under
 **Settings → About**.
 
-## Building from source
 
-Requirements: Node 20+, JDK 17, the Android SDK, and an Android device or
-emulator.
-
-```sh
-# install JS dependencies
-npm install
-
-# run on a connected device / emulator (starts Metro automatically)
-npm run android
-
-# build a release APK
-npm run build:android:release
-# output: android/app/build/outputs/apk/release/
-```
-
-Run the checks:
-
-```sh
-npm test          # unit tests
-npm run lint      # eslint
-npx tsc --noEmit  # type check
-```
 
 ## Tech
 
