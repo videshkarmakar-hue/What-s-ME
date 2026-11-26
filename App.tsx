@@ -817,9 +817,9 @@ const styles = StyleSheet.create({
     height: 68,
     borderRadius: 34,
     flexDirection: 'row',
-    backgroundColor: '#0B0B0B',
+    backgroundColor: '#1D302C',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     overflow: 'hidden',
   },
   navItem: {
