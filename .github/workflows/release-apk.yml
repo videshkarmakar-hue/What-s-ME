@@ -38,13 +38,25 @@ jobs:
         id: version
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         shell: bash
         run: |
           set -euo pipefail
-          tags="$(gh api "repos/${GITHUB_REPOSITORY}/releases" --jq '.[].tag_name' 2>/dev/null || true)"
-          published="$(printf '%s\n' "$tags" | sed 's/^v//' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)"
           current="$(grep -m1 -oE 'versionName "[0-9]+\.[0-9]+\.[0-9]+' android/app/build.gradle | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)"
           [ -z "$current" ] && current="1.0.0"
+
+          # The local APK-export watcher bumps and commits the version first.
+          # Reuse it so the release tag matches the APK it just built.
+          if [[ "${COMMIT_MESSAGE}" == *"[apk-export]"* ]]; then
+            echo "mode=export" >> "$GITHUB_OUTPUT"
+            echo "version=${current}" >> "$GITHUB_OUTPUT"
+            echo "APK export detected, using version ${current}"
+            exit 0
+          fi
+
+          echo "mode=auto" >> "$GITHUB_OUTPUT"
+          tags="$(gh api "repos/${GITHUB_REPOSITORY}/releases" --jq '.[].tag_name' 2>/dev/null || true)"
+          published="$(printf '%s\n' "$tags" | sed 's/^v//' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)"
           base="$(printf '%s\n%s\n' "$current" "$published" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)"
           IFS='.' read -r major minor patch <<< "$base"
           next="${major}.${minor}.$((patch + 1))"
@@ -52,6 +64,7 @@ jobs:
           echo "Next version: ${next}"
 
       - name: Bump version everywhere
+        if: steps.version.outputs.mode == 'auto'
         run: node scripts/bump-version.mjs "${{ steps.version.outputs.version }}"
 
       - name: Build clean standalone release APK
@@ -68,6 +81,7 @@ jobs:
           ls -lh release
 
       - name: Commit version bump (skip CI)
+        if: steps.version.outputs.mode == 'auto'
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |

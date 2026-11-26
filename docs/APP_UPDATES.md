@@ -25,6 +25,20 @@ new version is installed.
 - commits the bump with `[skip ci]` to avoid a loop,
 - publishes the APK asset to the GitHub Release.
 
+### APK export watcher
+
+`scripts/watch-apk-export.ps1` watches `android/app/build/outputs/apk`. Every
+exported APK bumps the patch version, commits with `[apk-export]` and pushes to
+`main`. The workflow detects that marker, reuses the already-bumped version,
+builds a fresh APK and publishes the release with its own `GITHUB_TOKEN`.
+No GitHub credentials are needed locally.
+
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/watch-apk-export.ps1
+```
+
+The OpenCode agent definition is `.opencode/agents/apk-export-releaser.md`.
+
 ## Files
 
 - `src/components/AppUpdateGate.tsx` — lifecycle and mandatory gate
