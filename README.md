@@ -1,3 +1,13 @@
+
+<p align="center">
+  <img
+    src="https://cdn.phototourl.com/member/2026-11-26-e888425d-1411-4249-a61b-d946b3b93452.png"
+    alt="Image Preview"
+    width="250"
+  />
+</p>
+
+
 # What's ME
 
 A small, offline Android app for saving the WhatsApp statuses you've already
