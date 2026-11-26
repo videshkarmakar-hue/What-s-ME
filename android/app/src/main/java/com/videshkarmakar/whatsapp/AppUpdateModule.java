@@ -40,6 +40,34 @@ public class AppUpdateModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void getVersionCode(Promise promise) {
+        try {
+            ReactApplicationContext context = getReactApplicationContext();
+            PackageInfo info = context.getPackageManager()
+                    .getPackageInfo(context.getPackageName(), 0);
+            promise.resolve(Long.toString(info.getLongVersionCode()));
+        } catch (Exception error) {
+            promise.reject("VERSION_ERROR", error.getMessage(), error);
+        }
+    }
+
+    @ReactMethod
+    public void getApkVersionCode(String filePath, Promise promise) {
+        try {
+            PackageInfo info = getReactApplicationContext()
+                    .getPackageManager()
+                    .getPackageArchiveInfo(filePath, 0);
+            if (info == null) {
+                promise.reject("VERSION_ERROR", "Could not read APK version code");
+                return;
+            }
+            promise.resolve(Long.toString(info.getLongVersionCode()));
+        } catch (Exception error) {
+            promise.reject("VERSION_ERROR", error.getMessage(), error);
+        }
+    }
+
+    @ReactMethod
     public void getApkVersionName(String filePath, Promise promise) {
         try {
             if (filePath == null || filePath.isEmpty()) {

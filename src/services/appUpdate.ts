@@ -1,4 +1,5 @@
 import { NativeModules, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNFS from 'react-native-fs';
 import {
   AppRelease,
@@ -9,10 +10,13 @@ import {
 const RELEASES_API =
   'https://api.github.com/repos/videshkarmakar-hue/What-s-ME/releases';
 const FALLBACK_VERSION = '1.0.4';
+const LAST_UPDATE_CODE_KEY = '@whatsme_last_update_code';
 
 const native: {
   getVersionName?: () => Promise<string | null>;
+  getVersionCode?: () => Promise<string | null>;
   getApkVersionName?: (path: string) => Promise<string | null>;
+  getApkVersionCode?: (path: string) => Promise<string | null>;
   installApk?: (path: string) => Promise<boolean>;
 } | undefined = NativeModules.AppUpdateModule;
 
@@ -56,6 +60,28 @@ export async function getCurrentAppVersion(): Promise<string> {
     // Fall through to the known version below.
   }
   return FALLBACK_VERSION;
+}
+
+/** Reads the installed app's versionCode (monotonic integer). */
+export async function getCurrentAppVersionCode(): Promise<number | null> {
+  try {
+    const value = await native?.getVersionCode?.();
+    const code = Number(value);
+    return Number.isFinite(code) ? code : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Reads the versionCode embedded in a downloaded APK file. */
+export async function getApkVersionCode(path: string): Promise<number | null> {
+  try {
+    const value = await native?.getApkVersionCode?.(path);
+    const code = Number(value);
+    return Number.isFinite(code) ? code : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Reads the versionName embedded in a downloaded APK file. */
@@ -137,5 +163,24 @@ export async function deleteDownloadedApk(path: string | null): Promise<void> {
     }
   } catch {
     // Best-effort cleanup only.
+  }
+}
+
+/** Remembers the code of the APK we last handed to the installer. */
+export async function markUpdateInstalled(code: number): Promise<void> {
+  try {
+    await AsyncStorage.setItem(LAST_UPDATE_CODE_KEY, String(code));
+  } catch {
+    // Marker is a safety net; failure must not break the update flow.
+  }
+}
+
+export async function getLastUpdateCode(): Promise<number | null> {
+  try {
+    const value = await AsyncStorage.getItem(LAST_UPDATE_CODE_KEY);
+    const code = Number(value);
+    return Number.isFinite(code) && value !== null ? code : null;
+  } catch {
+    return null;
   }
 }

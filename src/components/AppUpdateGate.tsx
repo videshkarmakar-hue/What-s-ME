@@ -12,8 +12,12 @@ import {
   downloadReleaseApk,
   fetchLatestRelease,
   getCurrentAppVersion,
+  getCurrentAppVersionCode,
   getApkVersion,
+  getApkVersionCode,
+  getLastUpdateCode,
   installApk,
+  markUpdateInstalled,
 } from '../services/appUpdate';
 import {
   AppRelease,
@@ -42,6 +46,7 @@ const AppUpdateGate: React.FC<PropsWithChildren> = ({ children }) => {
   const lastCheckRef = useRef(0);
   const downloadedPathRef = useRef<string | null>(null);
   const activeReleaseRef = useRef<AppRelease | null>(null);
+  const apkCodeRef = useRef<number | null>(null);
 
   /** Downloads the APK, verifies its real version, and only then shows the gate. */
   const prepareUpdate = useCallback(
@@ -61,18 +66,31 @@ const AppUpdateGate: React.FC<PropsWithChildren> = ({ children }) => {
 
       try {
         const path = await downloadReleaseApk(target.apk, setProgress);
-        const apkVersion = await getApkVersion(path);
+        const [apkVersion, apkCode, installedCode, lastCode] = await Promise.all([
+          getApkVersion(path),
+          getApkVersionCode(path),
+          getCurrentAppVersionCode(),
+          getLastUpdateCode(),
+        ]);
         const effectiveVersion = resolveUpdateVersion(
           target.version,
           apkVersion,
         );
 
-        // The APK is already installed (or older) - do not show the gate.
-        if (!isNewerVersion(effectiveVersion, installedVersion)) {
+        // versionCode is the authoritative comparison. The stored marker
+        // covers the case where Android reports a stale version after install.
+        const baselineCode = Math.max(installedCode ?? 0, lastCode ?? 0);
+        const alreadyInstalled =
+          apkCode !== null
+            ? apkCode <= baselineCode
+            : !isNewerVersion(effectiveVersion, installedVersion);
+
+        if (alreadyInstalled) {
           await deleteDownloadedApk(path);
           return;
         }
 
+        apkCodeRef.current = apkCode;
         downloadedPathRef.current = path;
         setRelease({ ...target, version: effectiveVersion });
         setProgress(100);
@@ -153,6 +171,9 @@ const AppUpdateGate: React.FC<PropsWithChildren> = ({ children }) => {
 
     try {
       await installApk(downloadedPathRef.current);
+      if (apkCodeRef.current !== null) {
+        await markUpdateInstalled(apkCodeRef.current);
+      }
       // The system installer takes over; if the user backs out, allow retrying.
       setTimeout(() => {
         setPhase(current => (current === 'installing' ? 'ready' : current));
