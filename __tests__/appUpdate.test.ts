@@ -3,6 +3,7 @@ import {
   normalizeTagName,
   parseReleaseResponse,
   parseVersionParts,
+  resolveUpdateVersion,
 } from '../src/utils/appUpdate';
 
 describe('App Update version helpers', () => {
@@ -22,6 +23,18 @@ describe('App Update version helpers', () => {
     expect(isNewerVersion('1.0.3', '1.0.2')).toBe(true);
     expect(isNewerVersion('v1.0.2', '1.0.2')).toBe(false);
     expect(isNewerVersion('0.9.9', '1.0.2')).toBe(false);
+  });
+});
+
+describe('APK version resolution', () => {
+  it('prefers the version embedded in the APK over the GitHub tag', () => {
+    expect(resolveUpdateVersion('1.0.2', '1.0.1')).toBe('1.0.1');
+    // Already installed 1.0.1 -> no further prompt for the same APK.
+    expect(isNewerVersion(resolveUpdateVersion('1.0.2', '1.0.1'), '1.0.1')).toBe(false);
+  });
+
+  it('falls back to the tag when the APK version is missing', () => {
+    expect(resolveUpdateVersion('v1.0.3', null)).toBe('1.0.3');
   });
 });
 

@@ -80,6 +80,21 @@ jobs:
             "release/What-s-ME-v${VERSION}-release.apk"
           ls -lh release
 
+      - name: Verify APK version matches release tag
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          APK="$PWD/release/What-s-ME-v${VERSION}-release.apk"
+          APK_VERSION="$("$AAPT" dump badging "$APK" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p" | head -n 1)"
+          echo "Release tag: ${VERSION}, APK versionName: ${APK_VERSION}"
+          if [ "$APK_VERSION" != "$VERSION" ]; then
+            echo "Version mismatch - refusing to publish" >&2
+            exit 1
+          fi
+
       - name: Commit version bump (skip CI)
         if: steps.version.outputs.mode == 'auto'
         env:

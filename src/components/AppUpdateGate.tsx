@@ -12,9 +12,14 @@ import {
   downloadReleaseApk,
   fetchLatestRelease,
   getCurrentAppVersion,
+  getApkVersion,
   installApk,
 } from '../services/appUpdate';
-import { AppRelease, isNewerVersion } from '../utils/appUpdate';
+import {
+  AppRelease,
+  isNewerVersion,
+  resolveUpdateVersion,
+} from '../utils/appUpdate';
 
 const RECHECK_THROTTLE_MS = 60_000;
 
@@ -24,9 +29,9 @@ function describeError(error: unknown): string {
 }
 
 /**
- * Checks GitHub Releases on launch and whenever the app returns to the
- * foreground. When a newer release exists it renders a mandatory App Update
- * screen that cannot be dismissed or skipped.
+ * Checks GitHub Releases on launch and foreground resume. The update decision
+ * uses the version embedded in the APK file, not just the release tag, so a
+ * mismatched tag cannot cause an endless update prompt after installing.
  */
 const AppUpdateGate: React.FC<PropsWithChildren> = ({ children }) => {
   const [release, setRelease] = useState<AppRelease | null>(null);
@@ -38,33 +43,52 @@ const AppUpdateGate: React.FC<PropsWithChildren> = ({ children }) => {
   const downloadedPathRef = useRef<string | null>(null);
   const activeReleaseRef = useRef<AppRelease | null>(null);
 
-  const startDownload = useCallback(async (target: AppRelease) => {
-    activeReleaseRef.current = target;
+  /** Downloads the APK, verifies its real version, and only then shows the gate. */
+  const prepareUpdate = useCallback(
+    async (target: AppRelease, installedVersion: string) => {
+      activeReleaseRef.current = target;
 
-    if (!target.apk) {
+      if (!target.apk) {
+        setError(null);
+        setPhase('no-apk');
+        setRelease(target);
+        return;
+      }
+
       setError(null);
-      setPhase('no-apk');
-      return;
-    }
+      setProgress(0);
+      setPhase('downloading');
 
-    setError(null);
-    setProgress(0);
-    setPhase('downloading');
+      try {
+        const path = await downloadReleaseApk(target.apk, setProgress);
+        const apkVersion = await getApkVersion(path);
+        const effectiveVersion = resolveUpdateVersion(
+          target.version,
+          apkVersion,
+        );
 
-    try {
-      const path = await downloadReleaseApk(target.apk, setProgress);
-      downloadedPathRef.current = path;
-      setProgress(100);
-      setPhase('ready');
-    } catch (downloadError) {
-      setError(describeError(downloadError));
-      setPhase('error');
-    }
-  }, []);
+        // The APK is already installed (or older) - do not show the gate.
+        if (!isNewerVersion(effectiveVersion, installedVersion)) {
+          await deleteDownloadedApk(path);
+          return;
+        }
+
+        downloadedPathRef.current = path;
+        setRelease({ ...target, version: effectiveVersion });
+        setProgress(100);
+        setPhase('ready');
+      } catch (downloadError) {
+        setError(describeError(downloadError));
+        setPhase('error');
+        setRelease(target);
+      }
+    },
+    [],
+  );
 
   const checkForUpdate = useCallback(
     async (force: boolean = false) => {
-      // Never interrupt an active install or a completed/pending download.
+      // Never interrupt an install or a download that is already in progress.
       if (release && !force && phase !== 'error' && phase !== 'no-apk') {
         return;
       }
@@ -76,21 +100,22 @@ const AppUpdateGate: React.FC<PropsWithChildren> = ({ children }) => {
       lastCheckRef.current = now;
 
       try {
-        const [currentVersion, latest] = await Promise.all([
-          getCurrentAppVersion(),
-          fetchLatestRelease(),
-        ]);
-
+        const installedVersion = await getCurrentAppVersion();
+        const latest = await fetchLatestRelease();
         if (!latest) return;
-        if (!isNewerVersion(latest.version, currentVersion)) return;
 
-        setRelease(latest);
-        await startDownload(latest);
+        // A release without an APK cannot be installed, but still needs a
+        // decision based on its tag.
+        if (!latest.apk && !isNewerVersion(latest.version, installedVersion)) {
+          return;
+        }
+
+        await prepareUpdate(latest, installedVersion);
       } catch {
         // A failed check must never break or block the app.
       }
     },
-    [phase, release, startDownload],
+    [phase, release, prepareUpdate],
   );
 
   const checkRef = useRef(checkForUpdate);
@@ -118,7 +143,8 @@ const AppUpdateGate: React.FC<PropsWithChildren> = ({ children }) => {
     if (!target) return;
 
     if (!downloadedPathRef.current) {
-      await startDownload(target);
+      const installedVersion = await getCurrentAppVersion();
+      await prepareUpdate(target, installedVersion);
       return;
     }
 
@@ -135,18 +161,20 @@ const AppUpdateGate: React.FC<PropsWithChildren> = ({ children }) => {
       setError(describeError(installError));
       setPhase('error');
     }
-  }, [release, startDownload]);
+  }, [release, prepareUpdate]);
 
   const handleRetry = useCallback(() => {
     const target = activeReleaseRef.current ?? release;
-    if (target) void startDownload(target);
-  }, [release, startDownload]);
+    if (!target) return;
+    void getCurrentAppVersion().then(installedVersion =>
+      prepareUpdate(target, installedVersion),
+    );
+  }, [release, prepareUpdate]);
 
   const handleRecheck = useCallback(() => {
     void checkRef.current(true);
   }, []);
 
-  // Free the downloaded APK if the gate ever unmounts.
   useEffect(() => {
     return () => {
       void deleteDownloadedApk(downloadedPathRef.current);

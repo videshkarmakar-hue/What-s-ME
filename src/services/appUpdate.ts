@@ -12,6 +12,7 @@ const FALLBACK_VERSION = '1.0.3';
 
 const native: {
   getVersionName?: () => Promise<string | null>;
+  getApkVersionName?: (path: string) => Promise<string | null>;
   installApk?: (path: string) => Promise<boolean>;
 } | undefined = NativeModules.AppUpdateModule;
 
@@ -55,6 +56,16 @@ export async function getCurrentAppVersion(): Promise<string> {
     // Fall through to the known version below.
   }
   return FALLBACK_VERSION;
+}
+
+/** Reads the versionName embedded in a downloaded APK file. */
+export async function getApkVersion(path: string): Promise<string | null> {
+  try {
+    const version = await native?.getApkVersionName?.(path);
+    return version && version.trim() ? version.trim() : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Downloads the release APK into the app's private files directory. */

@@ -60,6 +60,25 @@ export function isNewerVersion(remote: string, current: string): boolean {
 }
 
 /**
+ * The GitHub tag can drift from the version embedded in the uploaded APK.
+ * Prefer the APK's real version so the app never prompts repeatedly for an
+ * update that is already installed.
+ */
+export function resolveUpdateVersion(
+  tagVersion: string,
+  apkVersion: string | null,
+): string {
+  if (
+    apkVersion &&
+    apkVersion.trim() !== '' &&
+    parseVersionParts(apkVersion).length > 0
+  ) {
+    return normalizeTagName(apkVersion);
+  }
+  return normalizeTagName(tagVersion);
+}
+
+/**
  * Converts a GitHub "latest release" response into the shape used by the app.
  * Prefers a debug APK asset when one exists, otherwise uses the first APK asset.
  * Returns null when the response is not a usable release.

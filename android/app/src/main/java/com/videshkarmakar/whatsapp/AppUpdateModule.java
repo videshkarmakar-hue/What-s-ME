@@ -40,6 +40,31 @@ public class AppUpdateModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void getApkVersionName(String filePath, Promise promise) {
+        try {
+            if (filePath == null || filePath.isEmpty()) {
+                promise.reject("VERSION_ERROR", "No APK path provided");
+                return;
+            }
+            File apkFile = new File(filePath);
+            if (!apkFile.exists()) {
+                promise.reject("VERSION_ERROR", "APK file was not found");
+                return;
+            }
+            PackageInfo info = getReactApplicationContext()
+                    .getPackageManager()
+                    .getPackageArchiveInfo(filePath, 0);
+            if (info == null || info.versionName == null) {
+                promise.reject("VERSION_ERROR", "Could not read APK version");
+                return;
+            }
+            promise.resolve(info.versionName);
+        } catch (Exception error) {
+            promise.reject("VERSION_ERROR", error.getMessage(), error);
+        }
+    }
+
+    @ReactMethod
     public void installApk(String filePath, Promise promise) {
         try {
             if (filePath == null || filePath.isEmpty()) {
