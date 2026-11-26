@@ -8,7 +8,7 @@ import {
 
 const RELEASES_API =
   'https://api.github.com/repos/videshkarmakar-hue/What-s-ME/releases';
-const FALLBACK_VERSION = '1.0.2';
+const FALLBACK_VERSION = '1.0.3';
 
 const native: {
   getVersionName?: () => Promise<string | null>;
