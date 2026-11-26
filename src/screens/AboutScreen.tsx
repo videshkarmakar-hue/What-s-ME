@@ -152,7 +152,7 @@ const AboutScreen: React.FC<AboutScreenProps> = ({ onClose }) => {
             What's ME
           </Text>
           <Text style={[styles.heroVersion, { color: theme.textSecondary }]}>
-            Version 1.0.4
+            Version 1.0.5
           </Text>
         </View>
 
