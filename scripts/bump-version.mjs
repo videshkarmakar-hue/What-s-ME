@@ -1,10 +1,5 @@
 #!/usr/bin/env node
-/**
- * Updates every version-bearing file to a new 3-part version.
- * Used by .github/workflows/release-apk.yml before the clean debug build.
- *
- * Usage: node scripts/bump-version.mjs 1.0.1
- */
+/** Keeps every version-bearing file in sync. Usage: node scripts/bump-version.mjs 1.0.3 */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -22,27 +17,15 @@ const write = (file, text) => writeFileSync(resolve(file), text, 'utf8');
 const replace = (file, pattern, value) => {
   const before = read(file);
   const after = before.replace(pattern, value);
-  if (before === after) {
-    console.warn(`  ! no match in ${file} for ${pattern}`);
-  }
+  if (before === after) console.warn(`  ! no match in ${file}`);
   write(file, after);
 };
 
 console.log(`Bumping version to ${version} (versionCode ${versionCode})`);
 
-// Android app version.
-replace(
-  'android/app/build.gradle',
-  /versionCode\s+\d+/,
-  `versionCode ${versionCode}`,
-);
-replace(
-  'android/app/build.gradle',
-  /versionName\s+"[^"]+"/,
-  `versionName "${version}"`,
-);
+replace('android/app/build.gradle', /versionCode\s+\d+/, `versionCode ${versionCode}`);
+replace('android/app/build.gradle', /versionName\s+"[^"]+"/, `versionName "${version}"`);
 
-// npm package version.
 const pkg = JSON.parse(read('package.json'));
 pkg.version = version;
 write('package.json', `${JSON.stringify(pkg, null, 2)}\n`);
@@ -52,7 +35,6 @@ lock.version = version;
 if (lock.packages?.['']) lock.packages[''].version = version;
 write('package-lock.json', `${JSON.stringify(lock, null, 2)}\n`);
 
-// In-app version labels (all supported languages).
 replace(
   'src/context/LanguageContext.tsx',
   /('settings\.versionLabel':\s*')([^']+)(')/g,
@@ -62,21 +44,13 @@ replace(
   },
 );
 
-// About screen hero version.
-replace(
-  'src/screens/AboutScreen.tsx',
-  /Version\s+\d+\.\d+\.\d+(?:\.\d+)?/g,
-  `Version ${version}`,
-);
-
-// In-app updater fallback version (native package manager is the primary source).
+replace('src/screens/AboutScreen.tsx', /Version\s+\d+\.\d+\.\d+(?:\.\d+)?/g, `Version ${version}`);
 replace(
   'src/services/appUpdate.ts',
   /const FALLBACK_VERSION = '[^']+';/,
   `const FALLBACK_VERSION = '${version}';`,
 );
 
-// F-Droid recipe version fields.
 const fdroid = 'fdroid/com.videshkarmakar.whatsapp.yml';
 replace(fdroid, /versionName:\s+\S+/, `versionName: ${version}`);
 replace(fdroid, /versionCode:\s+\d+/, `versionCode: ${versionCode}`);

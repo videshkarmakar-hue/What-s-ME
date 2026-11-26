@@ -1,17 +1,17 @@
 import React from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
   Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
   TouchableOpacity,
-  Dimensions,
+  View,
 } from 'react-native';
-import { useTheme } from '../context/ThemeContext';
-import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const { width, height } = Dimensions.get('window');
+const ACCENT = '#00A884';
+const SURFACE = '#162621';
+const INSET = '#0F1A16';
 
 interface PermissionGuideModalProps {
   visible: boolean;
@@ -20,51 +20,13 @@ interface PermissionGuideModalProps {
   onCancel: () => void;
 }
 
+/** Storage access guide shown before opening the Android folder picker. */
 const PermissionGuideModal: React.FC<PermissionGuideModalProps> = ({
   visible,
   type: _type,
   onContinue,
   onCancel,
 }) => {
-  const { theme, isDark } = useTheme();
-
-  const containerStyles = [
-    styles.container,
-    isDark ? styles.containerDark : styles.containerLight,
-  ];
-  const mockDialogStyles = [
-    styles.mockDialogBase,
-    isDark ? styles.mockDialogDark : styles.mockDialogLight,
-  ];
-  const innerDialogStyles = [
-    styles.innerDialogBase,
-    isDark ? styles.innerDialogDark : styles.innerDialogLight,
-  ];
-  const titleStyles = [
-    styles.title,
-    isDark ? styles.titleDark : styles.titleLight,
-  ];
-  const dialogTitleStyles = [
-    styles.dialogTitle,
-    isDark ? styles.dialogTitleDark : styles.dialogTitleLight,
-  ];
-  const dialogMessageStyles = [
-    styles.dialogMessage,
-    isDark ? styles.dialogMessageDark : styles.dialogMessageLight,
-  ];
-  const cancelTextStyles = [
-    styles.mockButtonTextSecondary,
-    isDark ? styles.cancelTextDark : styles.cancelTextLight,
-  ];
-  const allowTextStyles = [
-    styles.mockButtonTextPrimary,
-    isDark ? styles.allowTextDark : styles.allowTextLight,
-  ];
-  const cancelButtonStyles = [
-    styles.cancelButton,
-    { borderColor: `${theme.textSecondary}30` },
-  ];
-
   return (
     <Modal
       visible={visible}
@@ -74,95 +36,121 @@ const PermissionGuideModal: React.FC<PermissionGuideModalProps> = ({
       onRequestClose={onCancel}
     >
       <View style={styles.overlay}>
-        <View style={containerStyles}>
-          <Text style={titleStyles}>Allow Permission</Text>
+        <View style={styles.card}>
+          <View style={styles.handle} />
 
-          <View style={styles.guideContainer}>
-            <View style={mockDialogStyles}>
-              <View style={styles.breadcrumbRow}>
-                <Text style={styles.breadcrumbText}>Internal</Text>
-                <Text style={styles.breadcrumbSeparator}>{'>'}</Text>
-                <Text style={styles.breadcrumbText}>Android</Text>
-                <Text style={styles.breadcrumbSeparator}>{'>'}</Text>
-                <Text style={styles.breadcrumbActive}>media</Text>
-              </View>
-
-              <View style={innerDialogStyles}>
-                <Text style={dialogTitleStyles}>
-                  Allow What's ME to access files in media?
-                </Text>
-                <Text style={dialogMessageStyles}>
-                  This will let What's ME access current and future
-                  content stored in media.
-                </Text>
-
-                <View style={styles.dialogButtonsRow}>
-                  <Text style={cancelTextStyles}>CANCEL</Text>
-                  <View style={styles.allowButtonContainer}>
-                    <Text style={allowTextStyles}>ALLOW</Text>
-                    <View style={styles.stepIndicator}>
-                      <Text style={styles.stepNumber}>2</Text>
-                    </View>
-                    <View style={styles.pointerAllow}>
-                      <Icon
-                        name="hand-pointing-right"
-                        size={30}
-                        color="#FFA726"
-                      />
-                    </View>
-                  </View>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Header */}
+            <View style={styles.header}>
+              <View style={styles.headerLeft}>
+                <View style={styles.headerIcon}>
+                  <Icon
+                    name="folder-outline"
+                    size={20}
+                    color={ACCENT}
+                  />
+                </View>
+                <View style={styles.headerText}>
+                  <Text style={styles.title}>Storage Access</Text>
+                  <Text style={styles.subtitle}>
+                    Required to load and store status media
+                  </Text>
                 </View>
               </View>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={onCancel}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Close permission guide"
+              >
+                <Icon name="close" size={14} color="rgba(255,255,255,0.5)" />
+              </TouchableOpacity>
+            </View>
 
-              <View style={styles.folderButtonWrapper}>
-                <View style={styles.useThisFolderButton}>
-                  <View style={styles.stepIndicator}>
-                    <Text style={styles.stepNumber}>1</Text>
-                  </View>
-                  <Text style={styles.useThisFolderText}>Use this Folder</Text>
-                  <View style={styles.pointerFolder}>
-                    <Icon
-                      name="hand-pointing-right"
-                      size={30}
-                      color="#FFA726"
-                    />
-                  </View>
+            {/* Target directory */}
+            <View style={styles.directoryRow}>
+              <Text style={styles.directoryLabel}>Directory</Text>
+              <View style={styles.path}>
+                <Text style={styles.pathPart}>Internal</Text>
+                <Text style={styles.pathSeparator}>/</Text>
+                <Text style={styles.pathPart}>Android</Text>
+                <Text style={styles.pathSeparator}>/</Text>
+                <Text style={styles.pathActive}>media</Text>
+              </View>
+            </View>
+
+            {/* Steps */}
+            <View style={styles.steps}>
+              <View style={styles.stepCard}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>1</Text>
+                </View>
+                <Text style={styles.stepText}>
+                  Select{' '}
+                  <Text style={styles.stepBadge}>Use this folder</Text> at the
+                  screen bottom
+                </Text>
+              </View>
+              <View style={styles.stepCard}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>2</Text>
+                </View>
+                <Text style={styles.stepText}>
+                  Tap <Text style={styles.stepBadgeAccent}>Allow</Text> on the
+                  system prompt
+                </Text>
+              </View>
+            </View>
+
+            {/* System dialog preview */}
+            <View style={styles.previewCard}>
+              <View style={styles.previewRow}>
+                <View style={styles.previewDot} />
+                <View style={styles.previewText}>
+                  <Text style={styles.previewTitle}>
+                    Allow What&apos;s ME to access files in media?
+                  </Text>
+                  <Text style={styles.previewDescription}>
+                    Grant read and write privileges for status downloads.
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.previewButtons}>
+                <Text style={styles.previewCancel}>Cancel</Text>
+                <View style={styles.previewAllow}>
+                  <Text style={styles.previewAllowText}>Allow</Text>
                 </View>
               </View>
             </View>
-          </View>
+          </ScrollView>
 
-          <View style={styles.actionButtons}>
+          {/* Actions */}
+          <View style={styles.actions}>
             <TouchableOpacity
-              style={cancelButtonStyles}
+              style={styles.cancelButton}
               onPress={onCancel}
               activeOpacity={0.7}
+              accessibilityRole="button"
             >
-              <Text
-                style={[
-                  styles.cancelButtonText,
-                  isDark
-                    ? styles.cancelButtonTextDark
-                    : styles.cancelButtonTextLight,
-                ]}
-              >
-                Cancel
-              </Text>
+              <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.continueButton}
+              style={styles.primaryButton}
               onPress={onContinue}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
+              accessibilityRole="button"
             >
-              <LinearGradient
-                colors={['#26A69A', '#00897B']}
-                style={styles.continueButtonGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
-                <Text style={styles.continueButtonText}>CONTINUE</Text>
-              </LinearGradient>
+              <Text style={styles.primaryText}>Grant Permission</Text>
+              <Icon name="chevron-right" size={14} color="#FFFFFF" />
             </TouchableOpacity>
+          </View>
+
+          <View style={styles.homeIndicator}>
+            <View style={styles.homeIndicatorBar} />
           </View>
         </View>
       </View>
@@ -173,234 +161,276 @@ const PermissionGuideModal: React.FC<PermissionGuideModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: 'rgba(8, 14, 11, 0.82)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
-  container: {
-    width: Math.min(width - 40, 440),
-    maxHeight: height - 80,
-    borderRadius: 16,
-    padding: 28,
+  card: {
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '95%',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
+    backgroundColor: SURFACE,
+    padding: 20,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 15,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.5,
+    shadowRadius: 24,
+    elevation: 16,
   },
-  containerDark: {
-    backgroundColor: '#2B3E47',
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignSelf: 'center',
+    marginBottom: 12,
   },
-  containerLight: {
-    backgroundColor: '#2B3E47',
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 16,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  headerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerText: {
+    flex: 1,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    textAlign: 'left',
-    marginBottom: 20,
-  },
-  titleDark: {
-    color: '#FFFFFF',
-  },
-  titleLight: {
-    color: '#FFFFFF',
-  },
-  guideContainer: {
-    marginBottom: 20,
-  },
-  mockDialogBase: {
-    borderRadius: 8,
-    padding: 0,
-    overflow: 'hidden',
-  },
-  mockDialogDark: {
-    backgroundColor: '#1C1C1E',
-  },
-  mockDialogLight: {
-    backgroundColor: '#1C1C1E',
-  },
-  breadcrumbRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-  },
-  breadcrumbText: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: '#B8B8B8',
-  },
-  breadcrumbSeparator: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: '#B8B8B8',
-    marginHorizontal: 8,
-  },
-  breadcrumbActive: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: '#B8B8B8',
-  },
-  innerDialogBase: {
-    borderRadius: 12,
-    padding: 20,
-    margin: 16,
-    position: 'relative',
-  },
-  innerDialogDark: {
-    backgroundColor: '#3C3C3E',
-  },
-  innerDialogLight: {
-    backgroundColor: '#3C3C3E',
-  },
-  dialogTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    marginBottom: 10,
-    lineHeight: 22,
-  },
-  dialogTitleDark: {
-    color: '#FFFFFF',
-  },
-  dialogTitleLight: {
-    color: '#FFFFFF',
-  },
-  dialogMessage: {
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 20,
-  },
-  dialogMessageDark: {
-    color: '#B0B0B0',
-  },
-  dialogMessageLight: {
-    color: '#B0B0B0',
-  },
-  dialogButtonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    gap: 24,
-  },
-  allowButtonContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    position: 'relative',
-  },
-  mockButtonTextSecondary: {
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  cancelTextDark: {
-    color: '#7C9AAA',
-  },
-  cancelTextLight: {
-    color: '#7C9AAA',
-  },
-  mockButtonTextPrimary: {
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  allowTextDark: {
-    color: '#7C9AAA',
-  },
-  allowTextLight: {
-    color: '#7C9AAA',
-  },
-  pointerAllow: {
-    position: 'absolute',
-    right: 30,
-    bottom: -22,
-    transform: [{ rotate: '230deg' }],
-  },
-  folderButtonWrapper: {
-    alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    position: 'relative',
-  },
-  useThisFolderButton: {
-    width: '95%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 'auto',
-    borderRadius: 6,
-    gap: 12,
-    backgroundColor: '#A4C2E4',
-    position: 'relative',
-  },
-  useThisFolderText: {
-    color: '#1C1C1E',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
   },
-  pointerFolder: {
-    position: 'absolute',
-    left: 70,
-    bottom: 38,
-    transform: [{ rotate: '40deg' }],
+  subtitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginTop: 2,
   },
-  stepIndicator: {
+  closeButton: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#FFC107',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    alignItems: 'center',
     justifyContent: 'center',
+  },
+  directoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: INSET,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 12,
+  },
+  directoryLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    color: 'rgba(255, 255, 255, 0.4)',
+  },
+  path: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  stepNumber: {
-    color: '#000000',
-    fontSize: 14,
+  pathPart: {
+    fontSize: 11,
     fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.5)',
   },
-  actionButtons: {
+  pathSeparator: {
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.2)',
+    marginHorizontal: 6,
+  },
+  pathActive: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: ACCENT,
+  },
+  steps: {
+    gap: 8,
+    marginBottom: 12,
+  },
+  stepCard: {
     flexDirection: 'row',
-    gap: 16,
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: INSET,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    padding: 12,
+  },
+  stepNumber: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepNumberText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  stepText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 17,
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  stepBadge: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 5,
+  },
+  stepBadgeAccent: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: ACCENT,
+    backgroundColor: 'rgba(0, 168, 132, 0.1)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 5,
+  },
+  previewCard: {
+    backgroundColor: INSET,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+    marginBottom: 4,
+  },
+  previewRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  previewDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: ACCENT,
+    marginTop: 6,
+  },
+  previewText: {
+    flex: 1,
+  },
+  previewTitle: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  previewDescription: {
+    fontSize: 11,
+    lineHeight: 16,
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginTop: 3,
+  },
+  previewButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.05)',
+    paddingTop: 8,
+  },
+  previewCancel: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.4)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  previewAllow: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  previewAllowText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: ACCENT,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     marginTop: 12,
   },
   cancelButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  cancelText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.5)',
+  },
+  primaryButton: {
     flex: 1,
-    borderWidth: 0,
-    borderRadius: 8,
-    paddingVertical: 10,
+    minHeight: 46,
+    borderRadius: 12,
+    backgroundColor: ACCENT,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent',
-    // fontWeight: '400',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  cancelButtonText: {
-    fontSize: 17,
-    fontWeight: '400',
-  },
-  cancelButtonTextDark: {
-    color: '#26A69A',
-  },
-  cancelButtonTextLight: {
-    color: '#26A69A',
-  },
-  continueButton: {
-    flex: 1,
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  continueButtonGradient: {
-    paddingVertical: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  continueButtonText: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '400',
+  primaryText: {
+    fontSize: 12,
+    fontWeight: '600',
     letterSpacing: 0.3,
+    color: '#FFFFFF',
+    marginRight: 4,
+  },
+  homeIndicator: {
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  homeIndicatorBar: {
+    width: 144,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
 });
 

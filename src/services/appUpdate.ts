@@ -17,7 +17,7 @@ const native: {
 
 export const APP_UPDATE_API_URL = RELEASES_API;
 
-/** Fetches the latest published GitHub release. Never throws for a missing APK. */
+/** Fetches the newest published GitHub release. Never throws for a missing APK. */
 export async function fetchLatestRelease(): Promise<AppRelease | null> {
   const response = await fetch(RELEASES_API, {
     method: 'GET',
@@ -35,9 +35,8 @@ export async function fetchLatestRelease(): Promise<AppRelease | null> {
   const data: unknown = await response.json();
   const releases = Array.isArray(data) ? data : [];
 
-  // The list endpoint also includes pre-releases, which is where debug APKs
-  // are commonly published. Drafts are skipped because their assets are not
-  // downloadable yet.
+  // The list endpoint includes pre-releases (where debug APKs are often
+  // published). Drafts are skipped because their assets are not downloadable.
   const newestPublished = releases.find(item => {
     if (!item || typeof item !== 'object') return false;
     const release = item as { draft?: unknown };
@@ -47,7 +46,7 @@ export async function fetchLatestRelease(): Promise<AppRelease | null> {
   return parseReleaseResponse(newestPublished ?? null);
 }
 
-/** Reads the app's real version from the native package manager. */
+/** Reads the real installed version from the native package manager. */
 export async function getCurrentAppVersion(): Promise<string> {
   try {
     const version = await native?.getVersionName?.();
@@ -70,13 +69,12 @@ export async function downloadReleaseApk(
   const fileName = `whatsme-update-${Date.now()}.apk`;
   const targetPath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
 
-  // Remove any stale partial download from an earlier attempt.
   try {
     if (await RNFS.exists(targetPath)) {
       await RNFS.unlink(targetPath);
     }
   } catch {
-    // Ignore cleanup failures; the download will overwrite where possible.
+    // Best-effort cleanup of any stale partial download.
   }
 
   const result = await RNFS.downloadFile({
@@ -102,8 +100,7 @@ export async function downloadReleaseApk(
     throw new Error(`APK download failed (${result.statusCode})`);
   }
 
-  const exists = await RNFS.exists(targetPath);
-  if (!exists) {
+  if (!(await RNFS.exists(targetPath))) {
     throw new Error('Downloaded APK could not be found');
   }
 

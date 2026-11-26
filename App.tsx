@@ -22,6 +22,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
+import LinearGradient from 'react-native-linear-gradient';
 import {
   SafeAreaProvider,
   SafeAreaView,
@@ -35,13 +36,15 @@ import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
 import { FeedbackProvider } from './src/context/FeedbackContext';
 import AppUpdateGate from './src/components/AppUpdateGate';
-
 type TabType = 'status' | 'saved' | 'settings' | 'about' | 'help';
 type MediaType = 'images' | 'videos';
 
 const { width } = Dimensions.get('window');
 const SWIPE_THRESHOLD = width * 0.2;
 const TAB_WIDTH = width / 2;
+const NAV_WIDTH = Math.min(width - 48, 420);
+const NAV_ITEM_ACTIVE = NAV_WIDTH * 0.5;
+const NAV_ITEM_IDLE = NAV_WIDTH * 0.25;
 const SLIDE_DURATION = 340;
 
 function App() {
@@ -75,20 +78,63 @@ function AppContent() {
   const { theme, isDark } = useTheme();
   const activeColor = theme.primary;
   const inactiveColor = theme.textSecondary;
-  const navIdleCircleColor = isDark
-    ? 'rgba(255, 255, 255, 0.05)'
-    : 'rgba(17, 27, 33, 0.06)';
-  const navActiveCircleColor = isDark
-    ? 'rgba(0, 168, 132, 0.15)'
-    : 'rgba(0, 168, 132, 0.12)';
-  const navActiveColor = '#00A884';
-  const navIdleIconColor = isDark
-    ? 'rgba(255, 255, 255, 0.5)'
-    : 'rgba(17, 27, 33, 0.45)';
-  const navIdleLabelColor = isDark
-    ? 'rgba(255, 255, 255, 0.6)'
-    : 'rgba(17, 27, 33, 0.55)';
   const { t } = useLanguage();
+
+  const navIndex =
+    activeTab === 'status' ? 0 : activeTab === 'saved' ? 1 : 2;
+  const navProgress = useRef(new Animated.Value(navIndex)).current;
+
+  useEffect(() => {
+    Animated.timing(navProgress, {
+      toValue: navIndex,
+      duration: 260,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [navIndex, navProgress]);
+
+  const navItemWidth = (index: number) =>
+    navProgress.interpolate({
+      inputRange: [0, 1, 2],
+      outputRange: [
+        index === 0 ? NAV_ITEM_ACTIVE : NAV_ITEM_IDLE,
+        index === 1 ? NAV_ITEM_ACTIVE : NAV_ITEM_IDLE,
+        index === 2 ? NAV_ITEM_ACTIVE : NAV_ITEM_IDLE,
+      ],
+    });
+  const navItemOpacity = (index: number) =>
+    navProgress.interpolate({
+      inputRange: [0, 1, 2],
+      outputRange: [
+        index === 0 ? 1 : 0,
+        index === 1 ? 1 : 0,
+        index === 2 ? 1 : 0,
+      ],
+    });
+  const navLabelWidth = (index: number) =>
+    navProgress.interpolate({
+      inputRange: [0, 1, 2],
+      outputRange: [
+        index === 0 ? 80 : 0,
+        index === 1 ? 110 : 0,
+        index === 2 ? 132 : 0,
+      ],
+    });
+  const navLabelMargin = (index: number) =>
+    navProgress.interpolate({
+      inputRange: [0, 1, 2],
+      outputRange: [
+        index === 0 ? 10 : 0,
+        index === 1 ? 10 : 0,
+        index === 2 ? 10 : 0,
+      ],
+    });
+
+  const navItems: { label: string; icon: string; tab: TabType }[] = [
+    { label: 'Home', icon: 'home', tab: 'status' },
+    { label: 'Meetings', icon: 'calendar-month', tab: 'saved' },
+    { label: 'Notification', icon: 'notifications', tab: 'settings' },
+  ];
 
   const imagesLabelColor = mediaProgress.interpolate({
     inputRange: [0, 1],
@@ -537,146 +583,71 @@ function AppContent() {
           </View>
         )}
 
-        {/* Bottom Navigation */}
+        {/* Bottom Navigation - expanding pill */}
         {activeTab !== 'about' && activeTab !== 'help' && (
           <View
             style={[
               styles.bottomNav,
-              { paddingBottom: Math.max(insets.bottom, 16) },
+              { paddingBottom: Math.max(insets.bottom, 12) },
             ]}
           >
-            <View style={styles.navRow}>
-              <TouchableOpacity
-                style={[
-                  styles.navButton,
-                  activeTab === 'status' && styles.navButtonActive,
-                ]}
-                onPress={() => setActiveTab('status')}
-                accessibilityRole="button"
-                accessibilityLabel={t('tabs.statusAccessibility')}
-              >
-                <View
-                  style={[
-                    styles.navIconCircle,
-                    {
-                      backgroundColor:
-                        activeTab === 'status'
-                          ? navActiveCircleColor
-                          : navIdleCircleColor,
-                    },
-                  ]}
-                >
-                  <MaterialIcon
-                    name="update"
-                    size={22}
-                    color={
-                      activeTab === 'status' ? navActiveColor : navIdleIconColor
-                    }
-                  />
-                </View>
-                <Text
-                  style={[
-                    styles.navText,
-                    {
-                      color:
-                        activeTab === 'status'
-                          ? navActiveColor
-                          : navIdleLabelColor,
-                    },
-                  ]}
-                >
-                  {t('tabs.status')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.navButton,
-                  activeTab === 'saved' && styles.navButtonActive,
-                ]}
-                onPress={() => setActiveTab('saved')}
-                accessibilityRole="button"
-                accessibilityLabel={t('tabs.savedAccessibility')}
-              >
-                <View
-                  style={[
-                    styles.navIconCircle,
-                    {
-                      backgroundColor:
-                        activeTab === 'saved'
-                          ? navActiveCircleColor
-                          : navIdleCircleColor,
-                    },
-                  ]}
-                >
-                  <MaterialIcon
-                    name="file_download"
-                    size={20}
-                    color={
-                      activeTab === 'saved' ? navActiveColor : navIdleIconColor
-                    }
-                  />
-                </View>
-                <Text
-                  style={[
-                    styles.navText,
-                    {
-                      color:
-                        activeTab === 'saved'
-                          ? navActiveColor
-                          : navIdleLabelColor,
-                    },
-                  ]}
-                >
-                  {t('tabs.saved')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.navButton,
-                  activeTab === 'settings' && styles.navButtonActive,
-                ]}
-                onPress={() => setActiveTab('settings')}
-                accessibilityRole="button"
-                accessibilityLabel={t('tabs.settingsAccessibility')}
-              >
-                <View
-                  style={[
-                    styles.navIconCircle,
-                    {
-                      backgroundColor:
-                        activeTab === 'settings'
-                          ? navActiveCircleColor
-                          : navIdleCircleColor,
-                    },
-                  ]}
-                >
-                  <MaterialIcon
-                    name="settings"
-                    size={20}
-                    color={
-                      activeTab === 'settings'
-                        ? navActiveColor
-                        : navIdleIconColor
-                    }
-                  />
-                </View>
-                <Text
-                  style={[
-                    styles.navText,
-                    {
-                      color:
-                        activeTab === 'settings'
-                          ? navActiveColor
-                          : navIdleLabelColor,
-                    },
-                  ]}
-                >
-                  {t('tabs.settings')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.homeIndicator}>
-              <View style={styles.homeIndicatorBar} />
+            <View style={styles.navTrack}>
+              {navItems.map((item, index) => {
+                const selected = activeTab === item.tab;
+                return (
+                  <Animated.View
+                    key={item.label}
+                    style={[styles.navItem, { width: navItemWidth(index) }]}
+                  >
+                    <Animated.View
+                      style={[
+                        styles.navActiveFill,
+                        { opacity: navItemOpacity(index) },
+                      ]}
+                    >
+                      <LinearGradient
+                        colors={['#F6F1FF', '#DCCBFF', '#B9A6FA']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.navActiveGradient}
+                      />
+                    </Animated.View>
+                    <TouchableOpacity
+                      style={styles.navItemPress}
+                      onPress={() => setActiveTab(item.tab)}
+                      activeOpacity={1}
+                      accessibilityRole="tab"
+                      accessibilityState={{ selected }}
+                      accessibilityLabel={item.label}
+                    >
+                      <View
+                        style={[
+                          styles.navIconCircle,
+                          selected && styles.navIconCircleActive,
+                        ]}
+                      >
+                        <MaterialIcon
+                          name={item.icon}
+                          size={20}
+                          color={selected ? '#111111' : '#8A8A8A'}
+                        />
+                      </View>
+                      <Animated.View
+                        style={[
+                          styles.navLabel,
+                          {
+                            opacity: navItemOpacity(index),
+                            width: navLabelWidth(index),
+                            marginLeft: navLabelMargin(index),
+                          },
+                        ]}
+                      >
+                        <Text style={styles.navText}>{item.label}</Text>
+                      </Animated.View>
+                    </TouchableOpacity>
+                  </Animated.View>
+                );
+              })}
             </View>
           </View>
         )}
@@ -836,56 +807,65 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   bottomNav: {
-    flexDirection: 'column',
+    alignItems: 'center',
     backgroundColor: '#0F1A16',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-    paddingTop: 10,
+    paddingTop: 8,
     paddingBottom: 16,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
-  navRow: {
+  navTrack: {
+    width: NAV_WIDTH,
+    height: 68,
+    borderRadius: 34,
     flexDirection: 'row',
-    width: '100%',
+    backgroundColor: '#0B0B0B',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    overflow: 'hidden',
   },
-  navButton: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 18,
-  },
-  navButtonActive: {},
-  navIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  navItem: {
+    height: '100%',
     justifyContent: 'center',
+  },
+  navActiveFill: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 34,
+    overflow: 'hidden',
+  },
+  navActiveGradient: {
+    flex: 1,
+  },
+  navItemPress: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+  },
+  navIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navIconCircleActive: {
+    borderWidth: 0,
+  },
+  navLabel: {
+    overflow: 'hidden',
+    justifyContent: 'center',
   },
   navText: {
-    fontSize: 12,
+    fontSize: 15,
     fontWeight: '600',
-    marginTop: 2,
-  },
-  navTextActive: {
-    color: '#10B981',
-  },
-  homeIndicator: {
-    alignItems: 'center',
-    paddingTop: 6,
-    paddingBottom: 4,
-  },
-  homeIndicatorBar: {
-    width: 128,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    color: '#111827',
+    letterSpacing: -0.3,
   },
 });
 

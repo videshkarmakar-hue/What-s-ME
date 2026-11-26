@@ -8,6 +8,7 @@ import React, {
 import { AppState, AppStateStatus } from 'react-native';
 import AppUpdateScreen, { AppUpdatePhase } from '../screens/AppUpdateScreen';
 import {
+  deleteDownloadedApk,
   downloadReleaseApk,
   fetchLatestRelease,
   getCurrentAppVersion,
@@ -143,6 +144,13 @@ const AppUpdateGate: React.FC<PropsWithChildren> = ({ children }) => {
 
   const handleRecheck = useCallback(() => {
     void checkRef.current(true);
+  }, []);
+
+  // Free the downloaded APK if the gate ever unmounts.
+  useEffect(() => {
+    return () => {
+      void deleteDownloadedApk(downloadedPathRef.current);
+    };
   }, []);
 
   return (

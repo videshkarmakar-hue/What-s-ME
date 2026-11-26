@@ -1,8 +1,7 @@
-name: Auto Release Debug APK
+name: Auto Release APK
 
-# The release "agent": every code change pushed to main gets a fresh, clean
-# release build (bundled JS, minified) and a new GitHub Release with a directly
-# installable APK asset.
+# Release agent: every code change pushed to main produces a fresh, clean,
+# standalone release APK and publishes it as a GitHub Release asset.
 on:
   push:
     branches: [main]
@@ -12,7 +11,6 @@ permissions:
 
 jobs:
   release:
-    # Version-bump commits are marked [skip ci] so they cannot retrigger this job.
     if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
     runs-on: ubuntu-latest
     steps:
@@ -40,25 +38,13 @@ jobs:
         id: version
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         shell: bash
         run: |
           set -euo pipefail
-          current="$(grep -m1 -oE 'versionName "[0-9]+\.[0-9]+\.[0-9]+' android/app/build.gradle | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)"
-          [ -z "$current" ] && current="1.0.0"
-
-          # A local APK export watcher bumps and commits the version first.
-          # In that case reuse it so the release tag matches the built APK.
-          if [[ "${COMMIT_MESSAGE}" == *"[apk-export]"* ]]; then
-            echo "mode=export" >> "$GITHUB_OUTPUT"
-            echo "version=${current}" >> "$GITHUB_OUTPUT"
-            echo "APK export detected, using version ${current}"
-            exit 0
-          fi
-
-          echo "mode=auto" >> "$GITHUB_OUTPUT"
           tags="$(gh api "repos/${GITHUB_REPOSITORY}/releases" --jq '.[].tag_name' 2>/dev/null || true)"
           published="$(printf '%s\n' "$tags" | sed 's/^v//' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)"
+          current="$(grep -m1 -oE 'versionName "[0-9]+\.[0-9]+\.[0-9]+' android/app/build.gradle | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)"
+          [ -z "$current" ] && current="1.0.0"
           base="$(printf '%s\n%s\n' "$current" "$published" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)"
           IFS='.' read -r major minor patch <<< "$base"
           next="${major}.${minor}.$((patch + 1))"
@@ -66,10 +52,9 @@ jobs:
           echo "Next version: ${next}"
 
       - name: Bump version everywhere
-        if: steps.version.outputs.mode == 'auto'
         run: node scripts/bump-version.mjs "${{ steps.version.outputs.version }}"
 
-      - name: Build fresh release APK (bundled JS, minified)
+      - name: Build clean standalone release APK
         working-directory: android
         run: bash ./gradlew clean assembleRelease -PreleaseUniversalApk=true
 
@@ -83,7 +68,6 @@ jobs:
           ls -lh release
 
       - name: Commit version bump (skip CI)
-        if: steps.version.outputs.mode == 'auto'
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
@@ -109,6 +93,6 @@ jobs:
           else
             gh release create "$tag" "$asset" \
               --title "What-s-ME ${tag}" \
-              --notes "Fresh release APK built from ${GITHUB_SHA}. Bundled JS, minified and ready to install. Open the app to install this update directly - no GitHub visit needed." \
+              --notes "Fresh standalone release APK built from ${GITHUB_SHA}. Bundled JS, minified. Open the app to install this update directly - no GitHub visit needed." \
               --target "${GITHUB_SHA}"
           fi

@@ -15,11 +15,7 @@ import com.facebook.react.bridge.ReactMethod;
 
 import java.io.File;
 
-/**
- * Native support for the in-app App Update flow:
- *  - reports the installed version name from the package manager
- *  - opens the system package installer for a downloaded APK via FileProvider
- */
+/** Native support for the in-app App Update flow. */
 public class AppUpdateModule extends ReactContextBaseJavaModule {
 
     public AppUpdateModule(ReactApplicationContext reactContext) {

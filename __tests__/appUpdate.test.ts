@@ -19,52 +19,50 @@ describe('App Update version helpers', () => {
 
   it('detects newer releases', () => {
     expect(isNewerVersion('v1.0.1', '1.0.0.0')).toBe(true);
-    expect(isNewerVersion('1.0.2.0', '1.0.0.0')).toBe(true);
-    expect(isNewerVersion('2.0.0', '1.0.0.0')).toBe(true);
-    expect(isNewerVersion('v1.0.0', '1.0.0.0')).toBe(false);
-    expect(isNewerVersion('0.9.9', '1.0.0.0')).toBe(false);
+    expect(isNewerVersion('1.0.3', '1.0.2')).toBe(true);
+    expect(isNewerVersion('v1.0.2', '1.0.2')).toBe(false);
+    expect(isNewerVersion('0.9.9', '1.0.2')).toBe(false);
   });
 });
 
 describe('GitHub release parsing', () => {
   const asset = {
-    name: 'app-debug.apk',
-    browser_download_url: 'https://github.com/example/release/download/app-debug.apk',
+    name: 'What-s-ME-v1.0.3-release.apk',
+    browser_download_url: 'https://example.com/download/app.apk',
     size: 12345,
     content_type: 'application/vnd.android.package-archive',
   };
 
-  it('extracts an APK asset and release notes', () => {
+  it('extracts version, notes and APK asset', () => {
     const release = parseReleaseResponse({
-      tag_name: 'v1.0.1',
+      tag_name: 'v1.0.3',
       body: 'Bug fixes',
       published_at: '2026-11-26T00:00:00Z',
       assets: [asset],
     });
 
-    expect(release).not.toBeNull();
-    expect(release?.version).toBe('1.0.1');
+    expect(release?.version).toBe('1.0.3');
     expect(release?.notes).toBe('Bug fixes');
-    expect(release?.apk?.name).toBe('app-debug.apk');
+    expect(release?.apk?.name).toBe(asset.name);
     expect(release?.apk?.url).toBe(asset.browser_download_url);
   });
 
-  it('prefers a debug APK over other APK assets', () => {
+  it('prefers a debug APK when present', () => {
     const release = parseReleaseResponse({
-      tag_name: 'v1.0.2',
+      tag_name: 'v1.0.3',
       assets: [
-        { ...asset, name: 'app-release.apk' },
-        { ...asset, name: 'app-debug.apk' },
+        asset,
+        { ...asset, name: 'What-s-ME-v1.0.3-debug.apk' },
       ],
     });
-    expect(release?.apk?.name).toBe('app-debug.apk');
+    expect(release?.apk?.name).toBe('What-s-ME-v1.0.3-debug.apk');
   });
 
   it('reports no direct APK when a release has no APK asset', () => {
     const release = parseReleaseResponse({
-      tag_name: 'v1.0.3',
+      tag_name: 'v1.0.4',
       body: 'Source only release',
-      assets: [{ name: 'source.zip', browser_download_url: 'https://example.com/source.zip' }],
+      assets: [{ name: 'source.zip', browser_download_url: 'https://x/source.zip' }],
     });
     expect(release?.apk).toBeNull();
   });
