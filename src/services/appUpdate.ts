@@ -9,7 +9,7 @@ import {
 
 const RELEASES_API =
   'https://api.github.com/repos/videshkarmakar-hue/What-s-ME/releases';
-const FALLBACK_VERSION = '1.0.5';
+const FALLBACK_VERSION = '1.0.6';
 const LAST_UPDATE_CODE_KEY = '@whatsme_last_update_code';
 
 const native: {
