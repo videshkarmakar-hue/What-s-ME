@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import * as RNLocalize from 'react-native-localize';
 import MaterialIcon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useTheme } from '../context/ThemeContext';
 import { getDefaultDialCode } from '../utils/countryDialCodes';
 import { LanguageCode, useLanguage } from '../context/LanguageContext';
 import { useFeedback } from '../context/FeedbackContext';
@@ -24,16 +23,15 @@ interface SettingsScreenProps {
   onClose: () => void;
 }
 
-const BG = '#F2F2F7';
-const CARD = '#FFFFFF';
-const TEXT = '#111827';
-const SECONDARY = '#414B5A';
-const SEPARATOR = 'rgba(60, 60, 67, 0.10)';
-const ACCENT = '#007AFF';
+const BG = '#0F1A16';
+const CARD = '#162420';
+const TEXT = '#F1F5F3';
+const SECONDARY = '#B7CDC4';
+const SEPARATOR = 'rgba(255, 255, 255, 0.08)';
+const ACCENT = '#00A884';
 const GREEN = '#25D366';
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
-  const { themeMode, setThemeMode } = useTheme();
   const { language, setLanguage, t, options } = useLanguage();
   const { showMessage } = useFeedback();
 
@@ -58,17 +56,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     () => options.find(option => option.code === language) || options[0],
     [language, options],
   );
-
-  const isDarkMode = themeMode === 'dark' || themeMode === 'system';
-  const themeValue = isDarkMode
-    ? t('settings.themeDarkShort')
-    : t('settings.themeLightShort');
-
-  const cycleThemeMode = useCallback(() => {
-    if (themeMode === 'light') setThemeMode('dark');
-    else if (themeMode === 'dark') setThemeMode('system');
-    else setThemeMode('light');
-  }, [setThemeMode, themeMode]);
 
   const handleCountryCodeChange = useCallback((value: string) => {
     const digitsOnly = value.replace(/[^\d]/g, '');
@@ -115,7 +102,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
   return (
     <View style={styles.screen}>
-      <StatusBar barStyle="dark-content" backgroundColor={BG} />
+      <StatusBar barStyle="light-content" backgroundColor={BG} />
 
       {/* Header */}
       <View style={styles.header}>
@@ -154,7 +141,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             <TouchableOpacity
               style={styles.row}
               onPress={() => setDirectMessageVisible(true)}
-              activeOpacity={0.6}
+              activeOpacity={0.7}
               accessibilityRole="button"
             >
               <View style={styles.rowIcon}>
@@ -167,9 +154,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.row}
+              style={styles.rowLast}
               onPress={() => setLanguageModalVisible(true)}
-              activeOpacity={0.6}
+              activeOpacity={0.7}
               accessibilityRole="button"
             >
               <View style={styles.rowIcon}>
@@ -177,24 +164,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               </View>
               <Text style={styles.rowLabel}>Language</Text>
               <Text style={styles.rowValue}>{selectedLanguageOption.label}</Text>
-              <MaterialIcon name="chevron-right" size={18} color={SECONDARY} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.rowLast}
-              onPress={cycleThemeMode}
-              activeOpacity={0.6}
-              accessibilityRole="button"
-            >
-              <View style={styles.rowIcon}>
-                <MaterialIcon
-                  name={isDarkMode ? 'weather-night' : 'weather-sunny'}
-                  size={19}
-                  color={TEXT}
-                />
-              </View>
-              <Text style={styles.rowLabel}>Light/Dark Mode</Text>
-              <Text style={styles.rowValue}>{themeValue}</Text>
               <MaterialIcon name="chevron-right" size={18} color={SECONDARY} />
             </TouchableOpacity>
           </View>
@@ -226,7 +195,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                       key={option.code}
                       style={styles.modalOption}
                       onPress={() => handleLanguageSelect(option.code)}
-                      activeOpacity={0.6}
+                      activeOpacity={0.7}
                     >
                       <Text style={styles.modalOptionText}>{option.label}</Text>
                       {isSelected && (
@@ -349,19 +318,16 @@ const styles = StyleSheet.create({
     gap: 14,
     backgroundColor: CARD,
     borderRadius: 14,
+    borderWidth: 1,
+    borderColor: SEPARATOR,
     padding: 16,
     marginBottom: 28,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   avatar: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#E8F7EE',
+    backgroundColor: '#1A332A',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -388,12 +354,9 @@ const styles = StyleSheet.create({
   group: {
     backgroundColor: CARD,
     borderRadius: 14,
+    borderWidth: 1,
+    borderColor: SEPARATOR,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   row: {
     flexDirection: 'row',
@@ -434,7 +397,7 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -444,6 +407,8 @@ const styles = StyleSheet.create({
     maxWidth: 340,
     borderRadius: 16,
     backgroundColor: CARD,
+    borderWidth: 1,
+    borderColor: SEPARATOR,
     padding: 20,
   },
   modalTitle: {
