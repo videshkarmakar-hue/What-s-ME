@@ -23,7 +23,6 @@ $versionFiles = @(
   'package.json',
   'package-lock.json',
   'src/context/LanguageContext.tsx',
-  'src/screens/AboutScreen.tsx',
   'src/services/appUpdate.ts',
   'fdroid/com.videshkarmakar.whatsapp.yml'
 )

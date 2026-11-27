@@ -5,7 +5,6 @@ import {
   Modal,
   Platform,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -23,8 +22,6 @@ import { useFeedback } from '../context/FeedbackContext';
 
 interface SettingsScreenProps {
   onClose: () => void;
-  onNavigateToAbout?: () => void;
-  onNavigateToHelp?: () => void;
 }
 
 const DARK_UI = {
@@ -38,11 +35,7 @@ const DARK_UI = {
   accentMuted: '#1B3D34',
 };
 
-const SettingsScreen: React.FC<SettingsScreenProps> = ({
-  onClose,
-  onNavigateToAbout,
-  onNavigateToHelp,
-}) => {
+const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const { theme, themeMode, setThemeMode, isDark } = useTheme();
   const { language, setLanguage, t, options } = useLanguage();
   const { showMessage } = useFeedback();
@@ -95,27 +88,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
     return options.find(option => option.code === language) || options[0];
   }, [language, options]);
 
-  const handleShareApp = useCallback(async () => {
-    try {
-      const downloadUrl =
-        'https://f-droid.org/packages/com.videshkarmakar.whatsapp/';
-      const shareMessage = `${t(
-        'settings.shareAppAlertMessage',
-      )}\n\n${downloadUrl}`;
-
-      await Share.share({
-        message: shareMessage,
-        title: t('settings.shareAppAlertTitle'),
-      });
-    } catch {
-      showMessage({
-        title: t('settings.shareAppAlertTitle'),
-        message: t('settings.shareAppAlertMessage'),
-        type: 'info',
-      });
-    }
-  }, [showMessage, t]);
-
   const handleCountryCodeChange = useCallback((value: string) => {
     const digitsOnly = value.replace(/[^\d]/g, '');
     setCountryCode(digitsOnly ? `+${digitsOnly}` : '+');
@@ -163,33 +135,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
       setLanguageModalVisible(false);
     },
     [setLanguage],
-  );
-
-  const menuItems = useMemo(
-    () => [
-      {
-        label: t('settings.aboutShare'),
-        icon: 'sharealt',
-        onPress: handleShareApp,
-      },
-      {
-        label: t('settings.aboutHelp'),
-        icon: 'questioncircleo',
-        onPress: onNavigateToHelp,
-      },
-      {
-        label: 'Feedback',
-        icon: 'message1',
-        onPress: () =>
-          Linking.openURL('https://github.com/whatsme/whatsme/issues'),
-      },
-      {
-        label: t('settings.aboutTitle'),
-        icon: 'infocirlceo',
-        onPress: onNavigateToAbout,
-      },
-    ],
-    [handleShareApp, onNavigateToAbout, onNavigateToHelp, t],
   );
 
   return (
@@ -455,45 +400,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </TouchableOpacity>
           </View>
 
-          {/* Support menu */}
-          <View
-            style={[
-              styles.menuCard,
-              styles.cardSpaced,
-              { backgroundColor: ui.surface, borderColor: ui.border },
-            ]}
-          >
-            {menuItems.map((item, index) => (
-              <TouchableOpacity
-                key={item.label}
-                style={[
-                  styles.menuRow,
-                  index > 0 && styles.menuRowDivider,
-                  index > 0 && { borderTopColor: ui.border },
-                ]}
-                onPress={item.onPress}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel={item.label}
-              >
-                <View style={styles.rowLeft}>
-                  <View
-                    style={[
-                      styles.menuIcon,
-                      { backgroundColor: ui.accentDark, borderColor: ui.accent },
-                    ]}
-                  >
-                    <Icon name={item.icon} size={16} color={ui.accent} />
-                  </View>
-                  <Text style={[styles.menuLabel, { color: ui.text }]}>
-                    {item.label}
-                  </Text>
-                </View>
-                <Icon name="right" size={14} color={ui.subtle} />
-              </TouchableOpacity>
-            ))}
-          </View>
-
           <View style={styles.footer}>
             <Text style={[styles.footerText, { color: ui.subtle }]}>
               {t('settings.versionLabel')}
@@ -715,40 +621,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#FFFFFF',
     letterSpacing: 0.3,
-  },
-  menuCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  menuRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  menuRowDivider: {
-    borderTopWidth: 1,
-  },
-  rowLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    flex: 1,
-  },
-  menuIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    letterSpacing: -0.2,
   },
   footer: {
     alignItems: 'center',

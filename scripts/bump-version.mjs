@@ -44,7 +44,6 @@ replace(
   },
 );
 
-replace('src/screens/AboutScreen.tsx', /Version\s+\d+\.\d+\.\d+(?:\.\d+)?/g, `Version ${version}`);
 replace(
   'src/services/appUpdate.ts',
   /const FALLBACK_VERSION = '[^']+';/,

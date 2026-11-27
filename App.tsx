@@ -22,7 +22,6 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
-import LinearGradient from 'react-native-linear-gradient';
 
 const AnimatedMaterialIcon = Animated.createAnimatedComponent(MaterialIcon);
 
@@ -96,13 +95,11 @@ import {
 } from 'react-native-safe-area-context';
 import StatusListScreen from './src/screens/StatusListScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
-import AboutScreen from './src/screens/AboutScreen';
-import HelpScreen from './src/screens/HelpScreen';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
 import { FeedbackProvider } from './src/context/FeedbackContext';
 import AppUpdateGate from './src/components/AppUpdateGate';
-type TabType = 'status' | 'saved' | 'settings' | 'about' | 'help';
+type TabType = 'status' | 'saved' | 'settings';
 type MediaType = 'images' | 'videos';
 
 const { width } = Dimensions.get('window');
@@ -233,9 +230,7 @@ function AppContent() {
   }, [activeMedia]);
 
   useEffect(() => {
-    // Only the two primary tabs are valid "return" targets. about/help/settings
-    // are secondary screens reached from settings, so we must not remember them
-    // here or backing out of settings would loop back into them.
+    // Remember the last main screen so Settings can return there.
     if (activeTab === 'status' || activeTab === 'saved') {
       lastPrimaryTabRef.current = activeTab;
     }
@@ -404,10 +399,6 @@ function AppContent() {
 
   useEffect(() => {
     const onBackPress = () => {
-      if (activeTab === 'about' || activeTab === 'help') {
-        setActiveTab('settings');
-        return true;
-      }
       if (activeTab === 'settings') {
         setActiveTab(lastPrimaryTabRef.current);
         return true;
@@ -470,9 +461,7 @@ function AppContent() {
           </View>
         )}
 
-        {activeTab !== 'settings' &&
-          activeTab !== 'about' &&
-          activeTab !== 'help' && (
+        {activeTab !== 'settings' && (
             <>
               {activeTab === 'saved' ? (
                 <View style={styles.segmentedSaved}>
@@ -631,27 +620,12 @@ function AppContent() {
           <View style={styles.contentStandalone}>
             <SettingsScreen
               onClose={() => setActiveTab(lastPrimaryTabRef.current)}
-              onNavigateToAbout={() => setActiveTab('about')}
-              onNavigateToHelp={() => setActiveTab('help')}
             />
           </View>
         )}
 
-        {activeTab === 'about' && (
-          <View style={styles.contentStandalone}>
-            <AboutScreen onClose={() => setActiveTab('settings')} />
-          </View>
-        )}
-
-        {activeTab === 'help' && (
-          <View style={styles.contentStandalone}>
-            <HelpScreen onClose={() => setActiveTab('settings')} />
-          </View>
-        )}
-
         {/* Bottom Navigation - expanding pill */}
-        {activeTab !== 'about' && activeTab !== 'help' && (
-          <View
+        <View
             style={[
               styles.bottomNav,
               { paddingBottom: Math.max(insets.bottom, 12) },
@@ -670,14 +644,7 @@ function AppContent() {
                         styles.navActiveFill,
                         { opacity: navItemOpacity(index) },
                       ]}
-                    >
-                      <LinearGradient
-                        colors={['#F6F1FF', '#DCCBFF', '#B9A6FA']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.navActiveGradient}
-                      />
-                    </Animated.View>
+                    />
                     <TouchableOpacity
                       style={styles.navItemPress}
                       onPress={() => setActiveTab(item.tab)}
@@ -695,7 +662,7 @@ function AppContent() {
                         <AnimatedNavIcon
                           name={item.icon}
                           size={20}
-                          color={selected ? '#111111' : '#8A8A8A'}
+                          color={selected ? '#F1F5F4' : '#8A8A8A'}
                         />
                       </View>
                       <Animated.View
@@ -716,7 +683,6 @@ function AppContent() {
               })}
             </View>
           </View>
-        )}
       </View>
     </SafeAreaView>
   );
@@ -899,10 +865,9 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderRadius: 34,
-    overflow: 'hidden',
-  },
-  navActiveGradient: {
-    flex: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.14)',
+    backgroundColor: '#1D302C',
   },
   navItemPress: {
     flex: 1,
@@ -930,7 +895,7 @@ const styles = StyleSheet.create({
   navText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#111827',
+    color: '#F1F5F4',
     letterSpacing: -0.3,
   },
 });
