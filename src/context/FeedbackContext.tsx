@@ -352,7 +352,7 @@ const FeedbackToast: React.FC<FeedbackToastProps> = ({
           <MaterialCommunityIcon
             name="close"
             size={18}
-            color="rgba(255, 255, 255, 0.6)"
+            color="rgba(255, 255, 255, 0.9)"
           />
         </Pressable>
       </View>

@@ -445,7 +445,7 @@ function AppContent() {
                     accessibilityRole="button"
                     accessibilityLabel="Direct Chat"
                   >
-                    <MaterialIcon name="chat" size={16} color="#8B9E96" />
+                    <MaterialIcon name="chat" size={16} color="#B7CDC4" />
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.headerActionButton}
@@ -453,7 +453,7 @@ function AppContent() {
                     accessibilityRole="button"
                     accessibilityLabel="Refresh media"
                   >
-                    <Icon name="reload" size={16} color="#8B9E96" />
+                    <Icon name="reload" size={16} color="#B7CDC4" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -480,7 +480,7 @@ function AppContent() {
                       color={
                         activeMedia === 'images'
                           ? '#00A884'
-                          : 'rgba(255, 255, 255, 0.5)'
+                          : 'rgba(255, 255, 255, 0.8)'
                       }
                     />
                     <Text
@@ -509,7 +509,7 @@ function AppContent() {
                       color={
                         activeMedia === 'videos'
                           ? '#00A884'
-                          : 'rgba(255, 255, 255, 0.5)'
+                          : 'rgba(255, 255, 255, 0.8)'
                       }
                     />
                     <Text
@@ -662,7 +662,7 @@ function AppContent() {
                         <AnimatedNavIcon
                           name={item.icon}
                           size={20}
-                          color={selected ? '#F1F5F4' : '#8A8A8A'}
+                          color={selected ? '#F1F5F4' : '#B4C3BC'}
                         />
                       </View>
                       <Animated.View
@@ -769,7 +769,7 @@ const styles = StyleSheet.create({
     color: '#00A884',
   },
   segmentedSavedIdleText: {
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   mediaTabs: {
     flexDirection: 'row',

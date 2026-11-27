@@ -855,7 +855,7 @@ const styles = StyleSheet.create({
   savedEmptySubtitle: {
     fontSize: 15,
     fontWeight: '400',
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
     marginTop: 8,
   },
@@ -891,14 +891,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     fontWeight: '500',
-    color: '#8B9E96',
+    color: '#B7CDC4',
     marginTop: 10,
   },
   emptyCardSubtext: {
     fontSize: 10,
     textAlign: 'center',
     fontWeight: '400',
-    color: '#586A63',
+    color: '#9AADA5',
     marginTop: 4,
   },
   loadingIcon: {
@@ -928,7 +928,7 @@ const styles = StyleSheet.create({
   durationText: {
     fontSize: 10,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.95)',
   },
   recentHeader: {
     paddingHorizontal: 20,
@@ -939,7 +939,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     letterSpacing: 1,
-    color: '#8B9E96',
+    color: '#B7CDC4',
     textTransform: 'uppercase',
   },
 });

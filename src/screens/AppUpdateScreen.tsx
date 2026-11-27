@@ -33,8 +33,8 @@ const ACCENT = '#00C676';
 const SURFACE = '#14221D';
 const SURFACE_ELEVATED = '#1A2A24';
 const TEXT_PRIMARY = '#F1F5F4';
-const TEXT_SECONDARY = '#94A3B8';
-const LABEL_MUTED = '#7E9189';
+const TEXT_SECONDARY = '#B8C7D1';
+const LABEL_MUTED = '#A9BDB5';
 
 /**
  * Mandatory, non-dismissible App Update screen. It never opens GitHub:

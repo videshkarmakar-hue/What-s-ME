@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: 'rgba(255, 255, 255, 0.8)',
     marginTop: 2,
   },
   closeButton: {
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
-    color: 'rgba(255, 255, 255, 0.4)',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   path: {
     flexDirection: 'row',
@@ -262,11 +262,11 @@ const styles = StyleSheet.create({
   pathPart: {
     fontSize: 11,
     fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   pathSeparator: {
     fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.2)',
+    color: 'rgba(255, 255, 255, 0.45)',
     marginHorizontal: 6,
   },
   pathActive: {
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     lineHeight: 17,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   stepBadge: {
     fontSize: 11,
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
   previewDescription: {
     fontSize: 11,
     lineHeight: 16,
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: 'rgba(255, 255, 255, 0.8)',
     marginTop: 3,
   },
   previewButtons: {
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
   },
   previewCancel: {
     fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.4)',
+    color: 'rgba(255, 255, 255, 0.7)',
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
   cancelText: {
     fontSize: 12,
     fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   primaryButton: {
     flex: 1,

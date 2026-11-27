@@ -27,7 +27,7 @@ interface SettingsScreenProps {
 const BG = '#F2F2F7';
 const CARD = '#FFFFFF';
 const TEXT = '#111827';
-const SECONDARY = '#6B7280';
+const SECONDARY = '#414B5A';
 const SEPARATOR = 'rgba(60, 60, 67, 0.10)';
 const ACCENT = '#007AFF';
 const GREEN = '#25D366';
