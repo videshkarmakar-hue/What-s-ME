@@ -19,6 +19,7 @@ import { getDefaultDialCode } from '../utils/countryDialCodes';
 import { LanguageCode, useLanguage } from '../context/LanguageContext';
 import { useFeedback } from '../context/FeedbackContext';
 import AppInfoScreen from './AppInfoScreen';
+import DeveloperCreditScreen from './DeveloperCreditScreen';
 
 interface SettingsScreenProps {
   onClose: () => void;
@@ -44,6 +45,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const [isLanguageModalVisible, setLanguageModalVisible] = useState(false);
   const [isDirectMessageVisible, setDirectMessageVisible] = useState(false);
   const [isAppInfoVisible, setAppInfoVisible] = useState(false);
+  const [isDeveloperCreditVisible, setDeveloperCreditVisible] = useState(false);
 
   const sanitizedCountryCode = useMemo(
     () => countryCode.replace(/[^\d]/g, ''),
@@ -186,6 +188,22 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             </TouchableOpacity>
           </View>
 
+          <Text style={styles.sectionTitle}>Developer Credit</Text>
+          <View style={styles.group}>
+            <TouchableOpacity
+              style={styles.rowLast}
+              onPress={() => setDeveloperCreditVisible(true)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+            >
+              <View style={styles.rowIcon}>
+                <MaterialIcon name="account" size={19} color={TEXT} />
+              </View>
+              <Text style={styles.rowLabel}>Developer Credit</Text>
+              <MaterialIcon name="chevron-right" size={18} color={SECONDARY} />
+            </TouchableOpacity>
+          </View>
+
           <Text style={styles.version}>{t('settings.versionLabel')}</Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -297,6 +315,18 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         onRequestClose={() => setAppInfoVisible(false)}
       >
         <AppInfoScreen onClose={() => setAppInfoVisible(false)} />
+      </Modal>
+
+      {/* Developer Credit */}
+      <Modal
+        visible={isDeveloperCreditVisible}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setDeveloperCreditVisible(false)}
+      >
+        <DeveloperCreditScreen
+          onClose={() => setDeveloperCreditVisible(false)}
+        />
       </Modal>
     </View>
   );
