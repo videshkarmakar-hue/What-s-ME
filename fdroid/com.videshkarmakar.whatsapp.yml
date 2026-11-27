@@ -12,8 +12,8 @@ RepoType: git
 Repo: https://github.com/whatsme/whatsme.git
 
 Builds:
-  - versionName: 1.0.6
-    versionCode: 10006
+  - versionName: 1.0.7
+    versionCode: 10007
     commit: 1cb7e550b8a8b9fa25b43df02a27e73171b66089
     subdir: android/app
     sudo:
@@ -54,5 +54,5 @@ Builds:
       - node_modules/fb-dotslash/bin/windows
       - node_modules/fb-dotslash/bin/linux-musl.aarch64
 
-CurrentVersion: 1.0.6
-CurrentVersionCode: 10006
+CurrentVersion: 1.0.7
+CurrentVersionCode: 10007
